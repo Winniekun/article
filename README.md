@@ -6,4 +6,6 @@ My personal blog using issues and GitHub Actions (随意转载，无需署名)
  | ---- | ---- | ---- |
 ## 最近更新
 - [Java stream 精学](https://github.com/Winniekun/article/issues/3)--2023-02-27
-- [workflow不生效问题](https://github.com/Winniekun/article/issues/2)--2023-02-27
+- [使用 issue 写博客](https://github.com/Winniekun/article/issues/2)--2023-02-27
+## 环境搭建
+- [使用 issue 写博客](https://github.com/Winniekun/article/issues/2)--2023-02-27
