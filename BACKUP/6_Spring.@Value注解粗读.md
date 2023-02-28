@@ -4,7 +4,7 @@
 1. 创建bean实例，可以使用@Controller、@Service、@Repository、@Component等注解。
 2. 依赖注入某个对象，可以使用@Autowired和@Resource注解。
 3. 开启事务，可以使用@Transactional注解。
-4. 动态读取配置文件中的某个系统属性，可以使用@Value注解。
+4. 动态读取配置文件中的某个系统属性，可以使用**@Value**注解。
 
 # 使用
 ```
@@ -15,7 +15,7 @@ public @interface Value {
 	String value();
 }
 ```
-从@Value注解的源码，可以看出，其可以标注在字段、方法、参数、注解上，然后是在程序运行期间生效。
+从**@Value**注解的源码，可以看出，其可以标注在字段、方法、参数、注解上，然后是在程序运行期间生效。
 ## 不通过配置文件注入属性
 ### 注入普通字符串
 ```
@@ -104,7 +104,7 @@ public class UserService {
 @Value(value = "${value.test.userName}")
 private String userName = "user";
 ```
-这种方式无法设置默认值，因为设置userName默认值的时间，比@Value注解依赖注入属性值要早，会被直接覆盖。正确的使用@Value设置默认值的方式如下：
+这种方式无法设置默认值，因为设置userName默认值的时间，比**@Value**注解依赖注入属性值要早，会被直接覆盖。正确的使用**@Value**设置默认值的方式如下：
 ```
 @Value(value = "${value.test.userName:user}")
 private String userName;
@@ -113,7 +113,7 @@ private String userName;
 
 ### static变量设置值
 #### 方案一 set方法手动赋值
-虽然静态变量无法使用@Value直接赋值，但是可以通过通过setter方法，然后在setter方法上使用@Value注解给静态变量赋值
+虽然静态变量无法使用**@Value**直接赋值，但是可以通过通过setter方法，然后在setter方法上使用**@Value**注解给静态变量赋值
 ```
 @Getter
 @Component
@@ -144,7 +144,7 @@ public class ImgUtil {
 }
 ```
 ## #{} 和 ${}的区别
-@Value的能够支持这么多类型的注入，归根揭底就是${...}和#{...}的用法。
+**@Value**的能够支持这么多类型的注入，归根揭底就是${...}和#{...}的用法。
 
   | 功能
 -- | --
@@ -154,7 +154,7 @@ ${...} | 主要用于获取配置文件中的系统属性值，通过:可以设�
 **${...}**和**#{...}**也可以混合使用，但是在混合使用的时候，${...}需要在#{...}的内层，也就是"#{'${...}'}"的形式，因为Spring执行${...}时机要早于#{...}，当Spring执行外层的${...}时，内部的#{...}为空。
 ### 其他常见数据类型的注入
 #### 集合
-对于List类型，除了使用@ConfigurationPropertie定义一个对象之外，也可以直接通过@Value  + Spring EL表达式进行设置
+对于List类型，除了使用@ConfigurationPropertie定义一个对象之外，也可以直接通过**@Value**  + **Spring EL**表达式进行设置
 ```
 @Value("#{'${value.test.list}'.split(',')}")
 private List<String> list;
@@ -182,7 +182,7 @@ private List<String> list;
 ![image](https://user-images.githubusercontent.com/19886738/221851534-29471397-5f9c-48c5-b4d7-b19d489a3f7c.png)
 
 
-上述就是整个@Value属性填充的时序图。
+上述就是整个**@Value**属性填充的时序图。
 1. 通过调用**AbstractAutowireCapableBeanFactory**的**populateBean**方法在Bean的初始化阶段填充属性值。
 2. **populateBean**方法中调用了**InstantiationAwareBeanPostProcessor**接口的**postProcessProperties**回调方法处理真正的属性填充，
   a. **InstantiationAwareBeanPostProcessor**的实现类有多种，其中的**AutowiredAnnotationBeanPostProcessor**就用来处理属性自动注入的功能。
@@ -200,7 +200,7 @@ public class ValueController {
 }
 ```
 ## 第一步：获取被注解的属性（方法）
-> 核心逻辑：将对应的Bean中标注为@Value的所有信息封装为InjectionMetadata对象
+> 核心逻辑：将对应的Bean中标注为**@Value**的所有信息封装为InjectionMetadata对象
 ```
 protected void populateBean(String beanName, RootBeanDefinition mbd, @Nullable BeanWrapper bw) {
 	...
@@ -338,7 +338,7 @@ protected Object findValue(Annotation[] annotationsToSearch) {
     return null;
 }
 ```
-通过AnnotatedElementUtils.getMergedAnnotationAttributes()方法得到注解的属性集合，从而获取到@Value注解中value方法中的值。
+通过AnnotatedElementUtils.getMergedAnnotationAttributes()方法得到注解的属性集合，从而获取到**@Value**注解中value方法中的值。
 **这个时候，value的值为${value.test.age:10}**
 #### 第二步
 > 解析传入的${key:defalutValue}形式字符串，获取到key对应实际的值，解析的入口是resolveEmbeddedValue，实际执行的方法是processProperties()方法
