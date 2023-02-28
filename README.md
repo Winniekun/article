@@ -1,6 +1,6 @@
-## Gitblog
-My personal blog using issues and GitHub Actions (随意转载，无需署名)
-[RSS Feed](https://raw.githubusercontent.com/Winniekun/article/master/feed.xml)
+## Article
+Technical article using issues and GitHub Actions,
+[reference](https://github.com/yihong0618/gitblog)
 ## 友情链接
 | Name | Link | Desc | 
  | ---- | ---- | ---- |
