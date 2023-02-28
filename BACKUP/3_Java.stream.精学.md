@@ -107,6 +107,75 @@ strList.stream().map(String::toUpperCase).forEach(System.out::println);
 // B 
 // C
 ```
+### flatMap()
+
+**`flatMap()`** 不同于 **`map`** 地方在于 **`map`** 只是提取属性放入流中，而 **`flatMap()`** 先提取属性放入一个比较小的流，然后再将所有的流合并为一个流。
+
+![image-20230228215533915](https://cdn.jsdelivr.net/gh/Winniekun/cloudImg@master/uPic/image-20230228215533915.png)
+
+```java
+List<String> list = Arrays.asList("k,w,k", "a,b,c");
+//两个字符串，内部使用，分割，之后合并为一个新的字符数组
+list.stream().flatMap(s -> {
+    String[] split = s.split(",");
+    return Arrays.stream(split);
+}).forEach(System.out::println);
+// k
+// w
+// k
+// a
+// b
+// c
+```
+
+### peek()
+
+**`peek()`** 操作接收的是一个 **`Consumer<T>`** 函数。该操作会按照 **`Consumer<T>`** 函数提供的逻辑去消费流中的每一个元素，同时有可能改变元素内部的一些属性。
+
+> **`peek()`** 操作 一般用于不想改变流中元素本身的类型或者只想操作元素的内部状态，而 `map` 则用于改变流中元素本身类型，即从元素中派生出另一种类型的操作。
+
+![image-20230228223701126](https://cdn.jsdelivr.net/gh/Winniekun/cloudImg@master/uPic/image-20230228223701126.png)
+
+```java
+List<String> list = Lists.newArrayList("abandon", "boom", "com");
+list.stream().filter(ele -> ele.length() < 7).peek(s -> System.out.println("After filer value: " + s))
+        .map(String::toUpperCase).peek(s -> System.out.println("After map value: " + s)).forEach(System.out::println);
+// After filer value: boom
+// After map value: BOOM
+// BOOM
+// After filer value: com
+// After map value: COM
+// COM
+```
+
+### limit()
+
+**`limit()`** 方法对一个 Stream 进行截断操作，获取其前 N 个元素，如果原 Stream 中包含的元素个数小于 N，那就获取其所有的素。
+
+![image-20230228224803775](https://cdn.jsdelivr.net/gh/Winniekun/cloudImg@master/uPic/image-20230228224803775.png)
+
+```java
+List<Integer> list = Lists.newArrayList(1, 2, 3, 4, 5, 6, 7);
+list.stream().limit(3).forEach(System.out::println);
+// 1
+// 2
+// 3
+```
+
+### reduce()
+
+**`reduce()`** 方法用于从 Stream 中生成一个值，其生成的值不是随意的，而是根据指定的计算模型。比如，`min()`、`max()` 和 `count()` 方法，因为常用而被纳入标准库中。事实上，这些方法都是 `reduce` 操作。
+
+![image-20230228225117791](https://cdn.jsdelivr.net/gh/Winniekun/cloudImg@master/uPic/image-20230228225117791.png)
+```java
+List<Integer> list = Arrays.asList(1, 3, 2, 8, 11, 4);
+// 求和1
+Optional<Integer> sum1 = list.stream().reduce((x, y) -> x + y);
+// 求和2
+Optional<Integer> sum2 = list.stream().reduce(Integer::sum);
+// 求和3
+Integer sum3 = list.stream().reduce(0, Integer::sum);
+```
 
 ## 终止
 TODO
