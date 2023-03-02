@@ -188,3 +188,7 @@ TODO
 ![stream-source-5](https://cdn.jsdelivr.net/gh/Winniekun/cloudImg@master/uPic/stream-source-5.jpeg)
 
 # references
+- [Java8 Stream原理深度解析](https://www.cnblogs.com/Dorae/p/7779246.html)
+- [Java 8 Stream 探秘](https://colobu.com/2014/11/18/Java-8-Stream/)
+- [Java Stream 源码深入解析](https://xie.infoq.cn/article/a0e6dc7ed0735da5128b6825b)
+- [JavaLambdaInternals](
