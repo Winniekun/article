@@ -177,8 +177,82 @@ Optional<Integer> sum2 = list.stream().reduce(Integer::sum);
 Integer sum3 = list.stream().reduce(0, Integer::sum);
 ```
 
-## 终止
-TODO
+## Collect
+
+### 收集器的使用
+#### 使用collect生成map
+
+> Stream 背后的数据源可以是数组、容器等，但不能是 Map，换言之 Stream->Map 是可以的，但是转换操作相比于转换为 collection稍加复杂，我们需要清楚构造Map的 key 和 value 分别代表什么。
+
+1. `Collectors.toMap()`
+
+   >  需要手动指定key 和 value，并且该方法对key 和 value 都有严格要求
+   >
+   > - 不允许key 有重复，如果有重复未处理的话，会报错
+   >   - [Java9之后已经修复](https://bugs.openjdk.org/browse/JDK-8173464)，我们可以通过手动指定当 key重复时，使用哪个 value 值
+   > - 不允许value 值为空，否则会报错。
+
+   该操作上述内容已经介绍了，它和`Collectors.toCollection()`是并列的。
+
+   ```java
+   Employee a = Employee.builder().age(1).name("abc").build();
+   Employee b = Employee.builder().name("def").build();
+   Employee c = Employee.builder().age(100).name("def").build();
+   // 报错，b对象中，age 属性为null
+   Map<String, Integer> map = employeeList.stream().collect(Collectors.toMap(Employee::getName, Employee::getAge));
+   // 解决① 模拟正常的 map的 put 操作(使用 collect直接写)
+   HashMap<String, Integer> employeeMap = employeeList.stream().collect(HashMap::new, (map, item) -> map.put(item.getName(), item.getAge()), HashMap::putAll);
+   // {abc=1, def=null}
+   
+   // 解决② 未value=null 的值填充默认值
+   Map<String, Integer> employeeMap = employeeList.stream().collect(Collectors.toMap(Employee::getName, s -> Optional.ofNullable(s.getAge()).orElse(0)));
+   // 解决② 未value=null 的值填充默认值，并且新增对重复 key 值得处理
+   Map<String, Integer> employeeMap = employeeList.stream().collect(Collectors.toMap(Employee::getName, s -> Optional.ofNullable(s.getAge()).orElse(0), (key1, key2) -> key1));
+   
+   ```
+
+   
+
+2. `Collectors.partitioningBy()`
+
+   使用`partitioningBy()`生成的收集器，这种情况适用于将`Stream`中的元素依据某个**二值逻辑**（满足条件，或不满足）分成互补相交的两部分，比如男女性别、成绩及格与否等。下列代码展示将学生分成成绩及格或不及格的两部分。
+
+   ```java
+   // 根据分数获取通过和不通过的学生名单
+   Map<Boolean, List<Student>> passingFailing = students.stream()
+            .collect(Collectors.partitioningBy(s -> s.getGrade() >= PASS_THRESHOLD));
+   ```
+
+3. `Collectors.groupingBy()`
+
+   比较灵活的一种情况。跟SQL中的*group by*语句类似，这里的*groupingBy*()也是按照某个属性对数据进行分组，属性相同的元素会被对应到*Map的同一个key*上
+
+   ```java
+   // 按照部门对员工进行分组
+   Map<Department, List<Employee>> byDept = employees.stream()
+               .collect(Collectors.groupingBy(Employee::getDepartment));
+   ```
+
+   当然还能更灵活的使用，譬如我们只想根据部门对员工进行分组，然后想得到是员工的名字，而不是 Employee 对象
+
+   ```
+   Map<String, List<String>> employeeMap = employeeList.stream().collect(Collectors.groupingBy(Employee::getDepartment,
+           Collectors.mapping(Employee::getName,  Collectors.toList())));
+   ```
+
+#### 使用collect 做字符串 join
+
+> 从此，对字符串的操作，告别 for循环
+
+```java
+List<String> list = Lists.newArrayList("I", "am", "a", "programmer");
+String joined = list.stream().collect(Collectors.joining());
+// Iamaprogrammer
+String joined = list.stream().collect(Collectors.joining(","));
+// I,am,a,programmer
+String joined = list.stream().collect(Collectors.joining(",", "{", "}"));
+// {I,am,a,programmer}
+```
 
 
 # 实战
