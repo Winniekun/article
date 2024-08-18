@@ -2,8 +2,8 @@
 My personal blog using issues and GitHub Actions (随意转载，无需署名)
 
 ## 置顶文章
+- [2024年书单【年汇总】](https://github.com/Winniekun/article/issues/9)--2024-02-18
 - [Spring @Value注解粗读](https://github.com/Winniekun/article/issues/6)--2023-02-28
-- [2023年书单【年汇总】](https://github.com/Winniekun/article/issues/5)--2023-02-27
 - [Java stream 粗读](https://github.com/Winniekun/article/issues/3)--2023-02-27
 ## 最近更新
 - [Kafka 概览](https://github.com/Winniekun/article/issues/10)--2024-02-19
