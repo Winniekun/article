@@ -8,11 +8,11 @@ My personal blog([About Me](https://github.com/Winniekun)) using issues and GitH
 - [Spring @Value注解粗读](https://github.com/Winniekun/article/issues/6)--2023-02-28
 - [Java stream 粗读](https://github.com/Winniekun/article/issues/3)--2023-02-27
 ## 最近更新
+- [ThreadLocal源码解读](https://github.com/Winniekun/article/issues/15)--2025-02-10
 - [2024年终总结](https://github.com/Winniekun/article/issues/14)--2025-01-30
 - [容错编程-重试机制](https://github.com/Winniekun/article/issues/13)--2025-01-02
 - [个人项目](https://github.com/Winniekun/article/issues/12)--2024-10-14
 - [相机学习-01-基础知识](https://github.com/Winniekun/article/issues/11)--2024-08-18
-- [Kafka 概览](https://github.com/Winniekun/article/issues/10)--2024-02-19
 ## kafka
 - [Kafka 概览](https://github.com/Winniekun/article/issues/10)--2024-02-19
 ## 环境搭建
@@ -34,3 +34,5 @@ My personal blog([About Me](https://github.com/Winniekun)) using issues and GitH
 - [编码规范](https://github.com/Winniekun/article/issues/7)--2023-06-14
 ## 项目
 - [个人项目](https://github.com/Winniekun/article/issues/12)--2024-10-14
+## 源码解读
+- [ThreadLocal源码解读](https://github.com/Winniekun/article/issues/15)--2025-02-10
