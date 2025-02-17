@@ -93,7 +93,7 @@ static class Node<K,V> implements Map.Entry<K,V> {
 - 单个节点包含的信息有
     - key
     - value
-    - hash值
+    - hash值 (key经过hash之后的值)
     - next指针（指向下一个节点）
 
 ### TreeNode构造（红黑树节点）
@@ -237,12 +237,317 @@ final void putMapEntries(Map<? extends K, ? extends V> m, boolean evict) {
 2. 为什么给的是初始化容量， 计算的却是阀值，而不是容量？
 > 1.8中， 将table的初始化放入了resize()中，并且在类属性中也注意到了没有capacity这个属性， 所以这里只能重新计算threshold，而resize()后面就会根据threshold来重新计算capacity，来进行 table数组的初始化，然后再重新按照装载因子计算threshold。
 
-
-
 ### 增、改
+```java
+public V put(K key, V value) {
+    return putVal(hash(key), key, value, false, true);
+}
+```
+
+```java
+// 为了使计算出的hash更分散
+static final int hash(Object key) {
+    int h;
+    return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+}
+```
+> 哈希计算， 取得key的hashcode后，高16位与整个Hash异或运算重新计算hash值
+
+```java
+final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
+               boolean evict) {
+    // 对应table数组
+    Node<K,V>[] tab;
+    // 对应位置的 Node 节点
+    Node<K,V> p; 
+    // n table的长度
+    // 原tab中对应放入Node的位置
+    int n, i;
+    // 如果 table 未初始化，或者容量为 0 ，则进行扩容
+    // (第一次见这种赋值和判断融合的操作，学到了学到了)
+    if ((tab = table) == null || (n = tab.length) == 0)
+        n = (tab = resize()).length;
+    // 如果对应的位置的Node节点为空，则直接创建 Node 节点即可。
+    // (n-1)&hash 获取所在table的位置
+    if ((p = tab[i = (n - 1) & hash]) == null)
+        tab[i] = newNode(hash, key, value, null);
+    else {
+        // 哈希冲突解决
+        // key 在 HashMap 对应的老节点
+        Node<K,V> e; 
+        K k;
+        // hash相等 key相等 执行覆盖
+        if (p.hash == hash &&((k = p.key) == key || (key != null && key.equals(k))))
+            e = p;
+        // 为红黑树的节点
+        else if (p instanceof TreeNode)
+            e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+        // 为Node节点，则说明是链表，且不是覆盖操作。需要遍历查找
+        else {
+            // 判断什么时候进行链表转红黑树，什么时候红黑树转链表
+            for (int binCount = 0; ; ++binCount) {
+                // 如果链表遍历完了都没有找到相同key的元素，说明该key对应的元素不存在，则在链表                   // 最后插入一个新节点
+                if ((e = p.next) == null) {
+                    p.next = newNode(hash, key, value, null);
+                    // 链表的长度如果数量达到 TREEIFY_THRESHOLD（8）时，则进行树化。
+                    if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
+                        treeifyBin(tab, hash);
+                    break;
+                }
+                // 如果待插入的key在链表中找到了，则退出循环
+                if (e.hash == hash&&((k = e.key) == key || (key != null && key.equals(k))))
+                    break;
+                p = e;
+            }
+        }
+        // 覆盖操作， 也就是相同的key的value进行覆盖
+        if (e != null) { // existing mapping for key
+            V oldValue = e.value;
+            // onlyIfAbsent进行判断是否需要覆盖oldValue
+            if (!onlyIfAbsent || oldValue == null)
+                e.value = value;
+            afterNodeAccess(e);
+            return oldValue;
+        }
+    }
+    ++modCount;
+    // 如果超过阀值，则进行扩容
+    if (++size > threshold)
+        resize();
+    afterNodeInsertion(evict);
+    return null;
+}
+```
+以下图片为`putVal`方法的总体逻辑
+![hashmap_put.png](https://i.loli.net/2020/03/27/w281NB3JMPZEbSG.png)
 
 ### 扩容机制
+```java
+// 扩容方法
+final Node<K,V>[] resize() {
+    	// oldTab 表示当前的哈希桶
+        Node<K,V>[] oldTab = table;
+    	// oldCap表示当前哈希桶的容量 length
+        int oldCap = (oldTab == null) ? 0 : oldTab.length;
+    	// 当前哈希桶的阀值
+        int oldThr = threshold; 
+    	// 初始化新的容量和阀值
+        int newCap, newThr = 0;
+    	// 1. 如果当前的容量不为空
+        if (oldCap > 0) {
+            // 如果当前的容量已经达到了上限
+            if (oldCap >= MAXIMUM_CAPACITY) {
+                // 阀值为2^32-1
+                threshold = Integer.MAX_VALUE;
+                // 返回当前的哈希桶不再扩容
+                return oldTab;
+            }
+            // 否者新的容量为原先容量的两倍
+            else if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY &&
+                     oldCap >= DEFAULT_INITIAL_CAPACITY)// 如果旧的容量大于等于默认的初始容量						16
+                // 新的阀值也为原先的两倍
+                newThr = oldThr << 1; // double threshold
+        }
+    	// 2. 如果当前表是空的，但是有阈值。代表是初始化时指定了容量、阈值的情况(上述的第三种构造方法)
+        else if (oldThr > 0) // initial capacity was placed in threshold
+            newCap = oldThr; // 新的容量为旧的阀值
+        // 3. 此处的判断用于初始化 
+        else {               // zero initial threshold signifies using defaults
+            newCap = DEFAULT_INITIAL_CAPACITY;
+            newThr = (int)(DEFAULT_LOAD_FACTOR * DEFAULT_INITIAL_CAPACITY);
+        }
+    	//如果新的阈值是0，对应的是  当前表是空的，但是有阈值的情况
+        if (newThr == 0) {
+            //根据新表容量 和 加载因子 求出新的阈值
+            float ft = (float)newCap * loadFactor;
+            // 进行越界修复
+            newThr = (newCap < MAXIMUM_CAPACITY && ft < (float)MAXIMUM_CAPACITY ?
+                      (int)ft : Integer.MAX_VALUE);
+        }
+    	// 更新阀值
+        threshold = newThr;
+        @SuppressWarnings({"rawtypes","unchecked"})
+            Node<K,V>[] newTab = (Node<K,V>[])new Node[newCap];
+        // 更新哈希桶的引用
+        table = newTab;
+    	// 如果以前的哈希桶有元素
+    	// 以下执行将原哈希桶中的元素转入新的哈希桶中
+        if (oldTab != null) {
+            // 遍历老的哈希桶
+            for (int j = 0; j < oldCap; ++j) {
+                // 取出当前的节点e
+                Node<K,V> e;
+                // 如果当前桶中有元素, 则将链表复制给e
+                if ((e = oldTab[j]) != null) {
+                    // 将原哈希桶置空以便GC
+                    oldTab[j] = null;
+                    // 当前链表中只有一个元素, 没有发生哈希碰撞
+                    if (e.next == null)
+                        //直接将这个元素放置在新的哈希桶里。
+                        //注意这里取下标 是用 哈希值 与 桶的长度-1 。 
+                        //由于桶的长度是2的n次方，这么做其实是等于 一个模运算。但是效率更高
+                        newTab[e.hash & (newCap - 1)] = e;
+                    // 发生碰撞, 而且节点的个数超过8, 则转化为红黑树
+                    else if (e instanceof TreeNode)
+                        ((TreeNode<K,V>)e).split(this, newTab, j, oldCap);
+                    //发生碰撞, 节点个数＜8 则进行处理, 依次放入新的哈希桶对应的下标位置
+                    //因为扩容是容量翻倍，所以原链表上的每个节点，现在可能存放在原来的下								    //标,即low位， 或者扩容后的下标，即high位。 high位=low位+原哈希桶容量
+                    else { // preserve order
+                         //低位链表的头结点、尾节点
+                        Node<K,V> loHead = null, loTail = null;
+                         //高位链表的头结点、尾节点
+                        Node<K,V> hiHead = null, hiTail = null;
+                        Node<K,V> next;
+                       // 将同一桶中的元素根据(e.hash & oldCap)是否为0进行分割，分成高位链表和低位							链表以完成rehash
+                        do {
+                            next = e.next;
+                              //这里又是一个利用位运算 代替常规运算的高效点： 利用哈希值与旧的容量，
+                              //可以得到哈希值取模后，是大于等于oldCap还是小于oldCap，等于0代表小于                               //oldCap，应该存放在低位，否则存放在高位
+                            if ((e.hash & oldCap) == 0) {
+                               
+                                if (loTail == null)
+                                    loHead = e;
+                                else
+                                    loTail.next = e;
+                                loTail = e;
+                            }
+                            else {
+                                if (hiTail == null)
+                                    hiHead = e;
+                                else
+                                    hiTail.next = e;
+                                hiTail = e;
+                            }
+                        } while ((e = next) != null);
+                        if (loTail != null) {
+                            loTail.next = null;
+                            newTab[j] = loHead;
+                        }
+                        if (hiTail != null) {
+                            hiTail.next = null;
+                            newTab[j + oldCap] = hiHead;
+                        }
+                    }
+                }
+            }
+        }
+        return newTab;
+    }
+```
+
+1. 如果使用的是默认构造方法,  则第一次插入元素的时候初始化为默认的容量16, 扩容阀值为12
+2. 如果使用的是非默认方法,  则第一次插入元素时初始化容量为扩容阀值, 扩容的阀值为初始化的时候, 扩容门槛在构造方法里等于传入容量向上最近的2的n次方
+3. 如果旧容量＞0, 则新容量为旧容量的2倍, 但不超过最大容量2^30, 新的扩容阀值为旧的扩容阀值2倍
+4. 创建新的容量桶
+5. 搬移元素，原链表分化成两个链表，低位链表存储在原来桶的位置，高位链表搬移到原来桶的位置加旧容量的位置
 
 ### 删
+```java
+public V remove(Object key) {
+    Node<K,V> e;
+    return (e = removeNode(hash(key), key, null, false, true)) == null ?
+        null : e.value;
+}
+
+final Node<K,V> removeNode(int hash, Object key, Object value,
+                           boolean matchValue, boolean movable) {
+    // 这些和增里面是差不多的
+    // tab：桶数组 p：待删除节点的前驱节点 n: 桶数组大小 index: 桶数组第i个位置
+    Node<K,V>[] tab; Node<K,V> p; int n, index;
+    if ((tab = table) != null&&(n = tab.length)>0 &&(p=tab[index=(n-1)&hash])!= null) {
+        // node为需要删除的节点
+        Node<K,V> node = null, e; K k; V v;
+        if (p.hash == hash &&((k = p.key) == key || (key != null && key.equals(k))))
+            node = p;
+        else if ((e = p.next) != null) {
+            if (p instanceof TreeNode)
+                node = ((TreeNode<K,V>)p).getTreeNode(hash, key);
+            else {
+                do {
+                    if (e.hash == hash &&
+                        ((k = e.key) == key ||
+                         (key != null && key.equals(k)))) {
+                        node = e;
+                        break;
+                    }
+                    p = e;
+                } while ((e = e.next) != null);
+            }
+        }
+        // 找到对应的key进行remove核心
+        if (node != null && (!matchValue || (v = node.value) == value ||
+                             (value != null && value.equals(v)))) {
+            if (node instanceof TreeNode)
+                ((TreeNode<K,V>)node).removeTreeNode(this, tab, movable);
+            // 如果node ==  p，说明是链表头是待删除节点
+            else if (node == p)
+                tab[index] = node.next;
+            else
+                p.next = node.next;
+            ++modCount;
+            --size;
+            afterNodeRemoval(node);
+            return node;
+        }
+    }
+    return null;
+}
+```
+> 除去复杂的判断，也就是单链表删除指定的节点，共有两种情况： 1.删除的为头结点。2. 删除的为中间节点
 
 ### 查
+```java
+public V get(Object key) {
+    HashMap.Node e;
+    return (e = this.getNode(hash(key), key)) == null ? null
+}
+// 根据key获取对应的节点
+final HashMap.Node<K, V> getNode(int hash, Object key) {
+    HashMap.Node[] tab;
+    HashMap.Node first;
+    int n;
+    if ((tab = this.table) != null && (n = tab.length) > 0 && (first = tab[n - 1 & hash]) != null) {
+        Object k;
+        if (first.hash == hash && ((k = first.key) == key || key != null && key.equals(k))) {
+            return first;
+        }
+        HashMap.Node e;
+        if ((e = first.next) != null) {
+            if (first instanceof HashMap.TreeNode) {
+                return ((HashMap.TreeNode)first).getTreeNode(hash, key);
+            }
+            do {
+                if (e.hash == hash && ((k = e.key) == key || key != null && key.equals(k))) {
+                    return e;
+                }
+            } while((e = e.next) != null);
+        }
+    }
+    return null;
+}
+```
+> 使用`first.hash == hash && ((k = first.key) == key || key != null && key.equals(k))`判断是否为同一个key(因为相同的hash可能并不是同一个key，因为先是使用`(n - 1) & hash`寻找桶的位置，之后再依次查找key)
+
+## 总结&面试相关问题
+
+1. HashMap是一种散列表, 使用(数组+链表+红黑树)的结构
+
+2. HashMap的默认初始容量为16, 默认装载因子为0.75, 且容量总是2^n
+
+3. 正常情况下,  扩容为原来的两倍
+
+4. 桶的长度小于64 时, 不会进行树化
+
+5. 桶的长度大于64且链表长度大于8时, 进行树化
+
+6. 当单个桶中的元素小于6时, 进行反树化(转化为链表)
+
+7. 查询时间为$O(1)$ 添加时间O(1)
+   1.判断key，根据key算出索引。
+   2.根据索引获得索引位置所对应的键值对链表。
+   3.遍历键值对链表，根据key找到对应的Entry键值对。
+   4.拿到value。
+   **分析：**
+   以上四步要保证HashMap的时间复杂度O(1)，需要保证每一步都是O(1)，现在看起来就第三步对链表的循环的时间复杂度影响最大，链表查找的时间复杂度为O(n)，与链表长度有关。我们要保证那个链表长度为1，才可以说时间复杂度能满足O(1)。但这么说来只有那个hash算法尽量减少冲突，才能使链表长度尽可能短，理想状态为1。因此可以得出结论：HashMap的查找时间复杂度只有在最理想的情况下才会为O(1)，
+
+8. HashMap是非线程安全的
