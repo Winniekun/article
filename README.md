@@ -3,6 +3,7 @@ My personal blog([About Me](https://github.com/Winniekun)) using issues and GitH
 ![image](https://github.com/user-attachments/assets/a168bf11-661e-4566-b042-7fc9544de528)
 
 ## 置顶文章
+- [Spring事务梳理](https://github.com/Winniekun/article/issues/19)--2025-11-23
 - [并发情况下的数据丢失问题](https://github.com/Winniekun/article/issues/18)--2025-10-08
 - [2025年书单【年汇总】](https://github.com/Winniekun/article/issues/17)--2025-08-05
 - [个人项目](https://github.com/Winniekun/article/issues/12)--2024-10-14
@@ -19,6 +20,7 @@ My personal blog([About Me](https://github.com/Winniekun)) using issues and GitH
 - [使用 issue 写博客](https://github.com/Winniekun/article/issues/2)--2023-02-27
 ## 问题排查
 - [并发情况下的数据丢失问题](https://github.com/Winniekun/article/issues/18)--2025-10-08
+- [ThreadLocal源码解读](https://github.com/Winniekun/article/issues/15)--2025-02-10
 - [容错编程-重试机制](https://github.com/Winniekun/article/issues/13)--2025-01-02
 - [Java stream 粗读](https://github.com/Winniekun/article/issues/3)--2023-02-27
 - [Spring事务梳理](https://github.com/Winniekun/article/issues/19)--2025-11-23

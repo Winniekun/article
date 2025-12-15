@@ -10,6 +10,7 @@
 `Spring`事务管理器采用了`ThreadLocal`
 `Spring MVC` 的 `RequestContextHolder` 的实现使用了`ThreadLocal`
 
+
 ## Demo
 ```java
 public class ThreadLocalDemo {
